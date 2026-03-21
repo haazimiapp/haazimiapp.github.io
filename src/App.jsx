@@ -15,6 +15,9 @@ import Budget from './components/Budget';
 import Settings from './components/Settings';
 import { USERS } from './data/mockData';
 
+// 1. PASTE YOUR GOOGLE SCRIPT URL HERE
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_ACTUAL_ID_HERE/exec";
+
 const VIEWS = {
   dashboard: Dashboard,
   calendar: Calendar,
@@ -31,7 +34,12 @@ const VIEWS = {
 };
 
 export default function App() {
-  const [user, setUser] = useState(null);
+  // 2. We now check localStorage first so the user stays logged in after a refresh
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('haazimi_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  
   const [currentView, setCurrentView] = useState('dashboard');
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en');
@@ -49,22 +57,64 @@ export default function App() {
     localStorage.setItem('language', language);
   }, [language]);
 
+  // 3. NEW REGISTRATION LOGIC
+  const handleRegister = async (name, email, password) => {
+    const users = JSON.parse(localStorage.getItem('haazimi_accounts') || '[]');
+    
+    if (users.find(u => u.email === email)) {
+      return { success: false, message: "Email already registered on this device." };
+    }
+
+    // Save user locally
+    const newUser = { name, email, password, role: 'Teacher' };
+    users.push(newUser);
+    localStorage.setItem('haazimi_accounts', JSON.stringify(users));
+
+    // Send only the profile to Google Sheets (no passwords!)
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          type: "register",
+          name: name,
+          email: email,
+          role: "Teacher"
+        })
+      });
+    } catch(e) { console.log("Offline registration"); }
+
+    return { success: true };
+  };
+
+  // 4. UPDATED LOGIN LOGIC
   const handleLogin = (email, password) => {
-    const found = USERS.find(u => u.email === email && u.password === password);
+    // Check locally registered accounts first
+    const localUsers = JSON.parse(localStorage.getItem('haazimi_accounts') || '[]');
+    const foundLocal = localUsers.find(u => u.email === email && u.password === password);
+    
+    // Fallback to your mock USERS list if not found locally
+    const found = foundLocal || USERS.find(u => u.email === email && u.password === password);
+    
     if (found) {
+      // Save session memory so LogTime.jsx knows who this is
+      localStorage.setItem('haazimi_user', JSON.stringify({ name: found.name, role: found.role }));
       setUser(found);
       return true;
     }
     return false;
   };
 
+  // 5. UPDATED LOGOUT & DEV LOGIN
   const handleLogout = () => {
+    localStorage.removeItem('haazimi_user'); // Clear memory on logout
     setUser(null);
     setCurrentView('dashboard');
   };
 
   const handleDevLogin = (role) => {
     const found = USERS.find(u => u.role === role) || USERS[0];
+    localStorage.setItem('haazimi_user', JSON.stringify({ name: found.name, role: found.role }));
     setUser(found);
   };
 
@@ -76,6 +126,7 @@ export default function App() {
     return (
       <LoginPage
         onLogin={handleLogin}
+        onRegister={handleRegister} // <-- Added the new prop here
         onDevLogin={handleDevLogin}
         theme={theme}
         onToggleTheme={toggleTheme}
