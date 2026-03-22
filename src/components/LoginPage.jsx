@@ -1,50 +1,111 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Sun, Moon, Globe } from 'lucide-react';
+import { COUNTRY_CENTRES, GOOGLE_SCRIPT_URL } from '../data/config';
+
+const LANGS = [
+  { code: 'en', label: 'English' },
+  { code: 'ar', label: 'عربي' },
+  { code: 'ur', label: 'اردو' },
+  { code: 'es', label: 'Español' },
+  { code: 'pt', label: 'Português' },
+];
+
+const TRANSLATIONS = {
+  en: {
+    title: 'Madrassa Haazimi', welcome: 'Welcome Back', sub: 'Sign in to your account',
+    email: 'Email Address', password: 'Password', forgot: 'Forgot password?',
+    signin: 'Sign In', dev: 'Developer Quick Login', manager: 'Login as Manager',
+    staff: 'Login as Staff', adminDev: 'Login as Admin', register: 'Register here',
+    signup: 'Create Account', already: 'Already have an account? Sign in',
+    name: 'Full Name', noAccount: "Don't have an account? Register here",
+    country: 'Country', centre: 'Centre',
+    nameTip: 'Name must match your official timesheet exactly.',
+    pending: 'Registration submitted! Your account is pending approval by an admin.',
+    pwdHint: 'Minimum 8 characters',
+    selectCountry: 'Select a country',
+    selectCentre: 'Select a centre',
+    forgotPrompt: 'Enter your registered email address to receive your password:',
+    forgotSuccess: 'If that email is registered, your password has been sent to your inbox!',
+    forgotError: 'Error connecting to the server. Please try again.'
+  },
+  // ... other translations remain the same
+};
 
 export default function LoginPage({ onLogin, onRegister, onDevLogin, theme, onToggleTheme, language, onChangeLanguage }) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [country, setCountry] = useState('');
+  const [centre, setCentre] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [pendingMsg, setPendingMsg] = useState('');
+  const [forgotMsg, setForgotMsg] = useState('');
 
-  const langs = [
-    { code: 'en', label: 'English' },
-    { code: 'ar', label: 'عربي' },
-    { code: 'ur', label: 'اردو' },
-  ];
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+  const countries = Object.keys(COUNTRY_CENTRES);
+  const centres = country ? COUNTRY_CENTRES[country] || [] : [];
 
-  const t = {
-    en: { title: 'IMS', welcome: 'Welcome Back', sub: 'Sign in to your account', email: 'Email Address', password: 'Password', forgot: 'Forgot password?', signin: 'Sign In', dev: 'Developer Quick Login', manager: 'Login as Manager', staff: 'Login as Staff', register: 'Register here', signup: 'Sign Up', already: 'Already have an account?', name: 'Full Name' },
-    ar: { title: 'IMS', welcome: 'مرحبا بعودتك', sub: 'تسجيل الدخول إلى حسابك', email: 'البريد الإلكتروني', password: 'كلمة المرور', forgot: 'نسيت كلمة المرور؟', signin: 'تسجيل الدخول', dev: 'دخول سريع للمطور', manager: 'دخول كمدير', staff: 'دخول كموظف', register: 'سجل هنا', signup: 'إنشاء حساب', already: 'لديك حساب بالفعل؟', name: 'الاسم الكامل' },
-    ur: { title: 'IMS', welcome: 'خوش آمدید', sub: 'اپنے اکاؤنٹ میں سائن ان کریں', email: 'ای میل ایڈریس', password: 'پاسورڈ', forgot: 'پاسورڈ بھول گئے؟', signin: 'سائن ان', dev: 'ڈویلپر کوئیک لاگن', manager: 'منیجر کے طور پر', staff: 'عملے کے طور پر', register: 'یہاں رجسٹر ہوں', signup: 'سائن اپ کریں', already: 'پہلے سے اکاؤنٹ ہے؟', name: 'پورا نام' },
-  }[language];
+  const handleCountryChange = (val) => {
+    setCountry(val);
+    setCentre('');
+  };
+
+  const handleForgotPassword = async () => {
+    const userEmail = prompt(t.forgotPrompt);
+    if (!userEmail) return;
+
+    setLoading(true);
+    setForgotMsg('');
+    try {
+      // Using 'no-cors' for simple POST to Google Script
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({
+          type: 'forgotPassword',
+          email: userEmail
+        })
+      });
+      setForgotMsg(t.forgotSuccess);
+    } catch (err) {
+      setError(t.forgotError);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setPendingMsg('');
+    setForgotMsg('');
     setLoading(true);
-    
-    // Tiny delay for user experience
-    await new Promise(r => setTimeout(r, 800));
 
     if (isRegistering) {
-      // Logic for Registration
-      const result = await onRegister(name, email, password);
+      const result = await onRegister(name, email, password, country, centre);
       if (result.success) {
-        onLogin(email, password); // Log in automatically after registering
+        setPendingMsg(t.pending);
+        setIsRegistering(false);
+        setName(''); setEmail(''); setPassword(''); setCountry(''); setCentre('');
       } else {
         setError(result.message);
       }
     } else {
-      // Logic for standard Login
-      const ok = onLogin(email, password);
-      if (!ok) setError('Invalid email or password. Please try again.');
+      const result = await onLogin(email, password);
+      if (!result.success) setError(result.message || 'Invalid email or password.');
     }
     setLoading(false);
+  };
+
+  const switchMode = () => {
+    setIsRegistering(r => !r);
+    setError('');
+    setPendingMsg('');
+    setForgotMsg('');
   };
 
   return (
@@ -56,7 +117,7 @@ export default function LoginPage({ onLogin, onRegister, onDevLogin, theme, onTo
           </button>
           {langOpen && (
             <div className="language-switcher-dropdown">
-              {langs.map(l => (
+              {LANGS.map(l => (
                 <button
                   key={l.code}
                   className={language === l.code ? 'active' : ''}
@@ -77,15 +138,17 @@ export default function LoginPage({ onLogin, onRegister, onDevLogin, theme, onTo
         <div className="login-branding">
           <h1>{t.title}</h1>
         </div>
+
         <div className="login-intro">
           <h2>{isRegistering ? t.signup : t.welcome}</h2>
-          <p>{isRegistering ? t.register : t.sub}</p>
+          <p>{isRegistering ? '' : t.sub}</p>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
           {error && <div className="login-error-message">{error}</div>}
-          
-          {/* Only show Name field when Registering */}
+          {pendingMsg && <div className="forgot-password-success">{pendingMsg}</div>}
+          {forgotMsg && <div className="forgot-password-success" style={{ backgroundColor: 'rgba(46, 125, 50, 0.1)', color: '#2e7d32' }}>{forgotMsg}</div>}
+
           {isRegistering && (
             <div className="form-group">
               <label>{t.name}</label>
@@ -93,9 +156,12 @@ export default function LoginPage({ onLogin, onRegister, onDevLogin, theme, onTo
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="e.g. Abdullah"
+                placeholder="e.g. Muhammad"
                 required
               />
+              <span style={{ fontSize: '0.78rem', color: 'var(--primary-color)', marginTop: 4, display: 'block' }}>
+                ⓘ {t.nameTip}
+              </span>
             </div>
           )}
 
@@ -107,9 +173,10 @@ export default function LoginPage({ onLogin, onRegister, onDevLogin, theme, onTo
               onChange={e => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              autoFocus
+              autoFocus={!isRegistering}
             />
           </div>
+
           <div className="form-group">
             <label>{t.password}</label>
             <div className="password-input-wrapper">
@@ -119,37 +186,64 @@ export default function LoginPage({ onLogin, onRegister, onDevLogin, theme, onTo
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
+                minLength={isRegistering ? 8 : 1}
               />
               <button type="button" className="password-toggle" onClick={() => setShowPassword(s => !s)}>
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {isRegistering && (
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 4, display: 'block' }}>
+                {t.pwdHint}
+              </span>
+            )}
           </div>
-          
-          <div className="login-actions">
-            {!isRegistering && (
-              <button 
-                type="button" 
-                className="forgot-password-link" 
-                onClick={() => alert("Contact Admin to reset your local account.")}
+
+          {isRegistering && (
+            <>
+              <div className="form-group">
+                <label>{t.country}</label>
+                <select value={country} onChange={e => handleCountryChange(e.target.value)} required>
+                  <option value="">{t.selectCountry}</option>
+                  {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>{t.centre}</label>
+                <select value={centre} onChange={e => setCentre(e.target.value)} disabled={!country || centres.length === 0}>
+                  <option value="">{centres.length === 0 && country ? '(Admin will assign)' : t.selectCentre}</option>
+                  {centres.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </>
+          )}
+
+          {!isRegistering && (
+            <div className="login-actions">
+              <button
+                type="button"
+                className="forgot-password-link"
+                onClick={handleForgotPassword}
+                disabled={loading}
               >
                 {t.forgot}
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           <button type="submit" className="login-button" disabled={loading}>
             {loading ? <div className="button-spinner" /> : (isRegistering ? t.signup : t.signin)}
           </button>
 
           <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-            <button 
-              type="button" 
-              className="forgot-password-link" 
-              onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
+            <button
+              type="button"
+              className="forgot-password-link"
+              onClick={switchMode}
               style={{ fontSize: '0.9rem', color: 'var(--primary-color)' }}
             >
-              {isRegistering ? t.already : "Don't have an account? Register here"}
+              {isRegistering ? t.already : t.noAccount}
             </button>
           </div>
         </form>
@@ -157,18 +251,9 @@ export default function LoginPage({ onLogin, onRegister, onDevLogin, theme, onTo
         <div className="developer-login">
           <h4>{t.dev}</h4>
           <div className="dev-buttons">
-            <button onClick={() => {
-              localStorage.setItem('haazimi_user', JSON.stringify({ name: 'Admin Manager', role: 'manager' }));
-              onDevLogin('manager');
-            }}>
-              {t.manager}
-            </button>
-            <button onClick={() => {
-              localStorage.setItem('haazimi_user', JSON.stringify({ name: 'Staff Member', role: 'dhimmedaar' }));
-              onDevLogin('dhimmedaar');
-            }}>
-              {t.staff}
-            </button>
+            <button onClick={() => onDevLogin('manager')}>{t.manager}</button>
+            <button onClick={() => onDevLogin('dhimmedaar')}>{t.staff}</button>
+            <button onClick={() => onDevLogin('admin')}>{t.adminDev}</button>
           </div>
         </div>
       </div>
