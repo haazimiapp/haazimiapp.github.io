@@ -2,10 +2,39 @@ import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Calendar, Users, BookOpen, BarChart2, Clock,
   FileText, CheckSquare, AlertTriangle, MapPin, DollarSign, Settings,
-  Sun, Moon, Globe, Menu, X, ChevronRight, LogOut
+  Sun, Moon, Globe, Menu, X, ChevronRight, LogOut, Shield
 } from 'lucide-react';
 
 const NAV_SECTIONS = {
+  Manager: [
+    {
+      label: 'Main',
+      links: [
+        { view: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { view: 'calendar', icon: Calendar, label: 'Calendar' },
+      ],
+    },
+    {
+      label: 'Management',
+      links: [
+        { view: 'staff', icon: Users, label: 'Staff Management' },
+        { view: 'pendingleaves', icon: FileText, label: 'Leave Requests' },
+        { view: 'redflags', icon: AlertTriangle, label: 'Red Flags' },
+        { view: 'visits', icon: MapPin, label: 'People to Visit' },
+        { view: 'budget', icon: DollarSign, label: 'Budget' },
+        { view: 'reports', icon: BarChart2, label: 'Reports' },
+      ],
+    },
+    {
+      label: 'Personal',
+      links: [
+        { view: 'classes', icon: BookOpen, label: 'My Classes' },
+        { view: 'logtime', icon: Clock, label: 'Log Time' },
+        { view: 'leave', icon: CheckSquare, label: 'Request Leave' },
+        { view: 'settings', icon: Settings, label: 'Settings' },
+      ],
+    },
+  ],
   manager: [
     {
       label: 'Main',
@@ -31,6 +60,59 @@ const NAV_SECTIONS = {
         { view: 'classes', icon: BookOpen, label: 'My Classes' },
         { view: 'logtime', icon: Clock, label: 'Log Time' },
         { view: 'leave', icon: CheckSquare, label: 'Request Leave' },
+        { view: 'settings', icon: Settings, label: 'Settings' },
+      ],
+    },
+  ],
+  Admin: [
+    {
+      label: 'Admin',
+      links: [
+        { view: 'admin', icon: Shield, label: 'Command Centre' },
+        { view: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+      ],
+    },
+    {
+      label: 'Management',
+      links: [
+        { view: 'staff', icon: Users, label: 'Staff Management' },
+        { view: 'pendingleaves', icon: FileText, label: 'Leave Requests' },
+        { view: 'redflags', icon: AlertTriangle, label: 'Red Flags' },
+        { view: 'visits', icon: MapPin, label: 'People to Visit' },
+        { view: 'budget', icon: DollarSign, label: 'Budget' },
+        { view: 'reports', icon: BarChart2, label: 'Reports' },
+      ],
+    },
+    {
+      label: 'Personal',
+      links: [
+        { view: 'classes', icon: BookOpen, label: 'My Classes' },
+        { view: 'logtime', icon: Clock, label: 'Log Time' },
+        { view: 'leave', icon: CheckSquare, label: 'Request Leave' },
+        { view: 'settings', icon: Settings, label: 'Settings' },
+      ],
+    },
+  ],
+  Teacher: [
+    {
+      label: 'Main',
+      links: [
+        { view: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { view: 'calendar', icon: Calendar, label: 'Calendar' },
+      ],
+    },
+    {
+      label: 'My Work',
+      links: [
+        { view: 'classes', icon: BookOpen, label: 'My Classes' },
+        { view: 'logtime', icon: Clock, label: 'Log Time' },
+        { view: 'leave', icon: CheckSquare, label: 'Request Leave' },
+        { view: 'visits', icon: MapPin, label: 'People to Visit' },
+      ],
+    },
+    {
+      label: 'Account',
+      links: [
         { view: 'settings', icon: Settings, label: 'Settings' },
       ],
     },
@@ -94,6 +176,14 @@ const BOTTOM_NAV = [
   { view: 'settings', icon: Settings, label: 'Settings' },
 ];
 
+const LANGS = [
+  { code: 'en', label: 'English' },
+  { code: 'ar', label: 'عربي' },
+  { code: 'ur', label: 'اردو' },
+  { code: 'es', label: 'Español' },
+  { code: 'pt', label: 'Português' },
+];
+
 export default function Layout({
   user, currentView, onNavigate, onLogout,
   theme, onToggleTheme, language, onChangeLanguage,
@@ -112,18 +202,8 @@ export default function Layout({
   }, []);
 
   const handleToggle = () => {
-    if (isMobile) {
-      onToggleMobileSidebar();
-    } else {
-      onToggleSidebar();
-    }
+    if (isMobile) { onToggleMobileSidebar(); } else { onToggleSidebar(); }
   };
-
-  const langs = [
-    { code: 'en', label: 'English' },
-    { code: 'ar', label: 'عربي' },
-    { code: 'ur', label: 'اردو' },
-  ];
 
   return (
     <div className={`app-container has-bottom-nav ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${mobileSidebarOpen ? 'mobile-sidebar-open' : ''}`}>
@@ -131,7 +211,7 @@ export default function Layout({
 
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h1>IMS</h1>
+          <h1>Madrassa Haazimi</h1>
         </div>
         <nav className="sidebar-nav">
           {sections.map(section => (
@@ -160,7 +240,7 @@ export default function Layout({
           <div className="user-info">
             <div className="user-profile">
               <div className="user-name">{user.name}</div>
-              <div className="user-center">{user.center} · {user.role}</div>
+              <div className="user-center">{user.centre || user.center} · {user.role}</div>
             </div>
           </div>
 
@@ -171,7 +251,7 @@ export default function Layout({
               </button>
               {langOpen && (
                 <div className="language-switcher-dropdown">
-                  {langs.map(l => (
+                  {LANGS.map(l => (
                     <button
                       key={l.code}
                       className={language === l.code ? 'active' : ''}
