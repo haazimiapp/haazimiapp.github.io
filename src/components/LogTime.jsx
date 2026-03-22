@@ -40,14 +40,13 @@ const attemptSync = async () => {
     const offlineQueue = JSON.parse(localStorage.getItem('haazimi_offline_logs') || '[]');
     if (offlineQueue.length === 0) return;
 
-    // We use a copy to avoid glitches during the loop
     const newQueue = [...offlineQueue];
 
     for (let i = 0; i < newQueue.length; i++) {
       try {
         const log = newQueue[i];
+        const activeUser = JSON.parse(localStorage.getItem('haazimi_user') || '{"name":"Unknown"}');
         
-        // This is the "Magic Map" - it ensures Google gets exactly what it needs
         const payload = {
           date: log.date,
           activity: log.activity,
@@ -56,25 +55,24 @@ const attemptSync = async () => {
           checkOut: log.checkOut,
           notes: log.notes,
           studentCount: log.studentCount,
-          otherActivity: log.otherActivity
+          otherActivity: log.otherActivity,
+          teacherName: activeUser.name // Fixes the "Unknown" issue
         };
 
-        await fetch(GOOGLE_SCRIPT_URL, {
+        await fetch("https://script.google.com/macros/s/AKfycbw3kLcZu7y1AoUtThJbkpUiTSdZM1qke4Yuq-7IsXKCJ91LtjW3mshFGQj0z62WUO8l/exec", {
           method: "POST",
           mode: "no-cors",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload) // We send the mapped payload, not the raw log
+          body: JSON.stringify(payload)
         });
 
-        // If we reach here, it's a success! Remove from queue
         newQueue.splice(i, 1);
         i--; 
       } catch (err) {
-        console.log("Sync failed, keeping data in storage for next attempt.");
+        console.log("Sync failed, keeping data in storage.");
         break; 
       }
     }
-    // Update the storage with whatever is left
     localStorage.setItem('haazimi_offline_logs', JSON.stringify(newQueue));
   };
 
