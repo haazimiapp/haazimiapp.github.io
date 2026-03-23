@@ -35,35 +35,6 @@ const NAV_SECTIONS = {
       ],
     },
   ],
-  manager: [
-    {
-      label: 'Main',
-      links: [
-        { view: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { view: 'calendar', icon: Calendar, label: 'Calendar' },
-      ],
-    },
-    {
-      label: 'Management',
-      links: [
-        { view: 'staff', icon: Users, label: 'Staff Management' },
-        { view: 'pendingleaves', icon: FileText, label: 'Leave Requests' },
-        { view: 'redflags', icon: AlertTriangle, label: 'Red Flags' },
-        { view: 'visits', icon: MapPin, label: 'People to Visit' },
-        { view: 'budget', icon: DollarSign, label: 'Budget' },
-        { view: 'reports', icon: BarChart2, label: 'Reports' },
-      ],
-    },
-    {
-      label: 'Personal',
-      links: [
-        { view: 'classes', icon: BookOpen, label: 'My Classes' },
-        { view: 'logtime', icon: Clock, label: 'Log Time' },
-        { view: 'leave', icon: CheckSquare, label: 'Request Leave' },
-        { view: 'settings', icon: Settings, label: 'Settings' },
-      ],
-    },
-  ],
   Admin: [
     {
       label: 'Admin',
@@ -117,31 +88,11 @@ const NAV_SECTIONS = {
       ],
     },
   ],
-  dhimmedaar: [
-    {
-      label: 'Main',
-      links: [
-        { view: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { view: 'calendar', icon: Calendar, label: 'Calendar' },
-      ],
-    },
-    {
-      label: 'My Work',
-      links: [
-        { view: 'classes', icon: BookOpen, label: 'My Classes' },
-        { view: 'logtime', icon: Clock, label: 'Log Time' },
-        { view: 'leave', icon: CheckSquare, label: 'Request Leave' },
-        { view: 'visits', icon: MapPin, label: 'People to Visit' },
-      ],
-    },
-    {
-      label: 'Account',
-      links: [
-        { view: 'settings', icon: Settings, label: 'Settings' },
-      ],
-    },
-  ],
 };
+
+// Add fallback for lowercase roles if needed
+NAV_SECTIONS.manager = NAV_SECTIONS.Manager;
+NAV_SECTIONS.dhimmedaar = NAV_SECTIONS.Teacher;
 
 function NavSection({ section, currentView, onNavigate }) {
   const [open, setOpen] = useState(true);
@@ -192,21 +143,11 @@ export default function Layout({
   children
 }) {
   const [langOpen, setLangOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
   const sections = NAV_SECTIONS[user.role] || NAV_SECTIONS.dhimmedaar;
-
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth <= 900);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-
-  const handleToggle = () => {
-    if (isMobile) { onToggleMobileSidebar(); } else { onToggleSidebar(); }
-  };
 
   return (
     <div className={`app-container has-bottom-nav ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${mobileSidebarOpen ? 'mobile-sidebar-open' : ''}`}>
+      {/* Clicking the overlay should trigger the mobile specific toggle */}
       <div className="main-view-overlay" onClick={onToggleMobileSidebar} />
 
       <aside className="sidebar">
@@ -233,7 +174,8 @@ export default function Layout({
 
       <div className="main-view">
         <header className="app-header">
-          <button className="sidebar-toggle" onClick={handleToggle}>
+          {/* FIXED: We call onToggleSidebar which already has the smart logic built into App.jsx */}
+          <button className="sidebar-toggle" onClick={onToggleSidebar}>
             {mobileSidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
 
