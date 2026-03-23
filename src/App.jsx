@@ -14,7 +14,7 @@ import PeopleToVisit from './components/PeopleToVisit';
 import Budget from './components/Budget';
 import Settings from './components/Settings';
 import { USERS } from './data/mockData';
-import { GOOGLE_SCRIPT_URL } from './data/config'; // Importing from the config file we just made
+import { GOOGLE_SCRIPT_URL } from './data/config'; 
 
 const VIEWS = {
   dashboard: Dashboard,
@@ -32,17 +32,16 @@ const VIEWS = {
 };
 
 export default function App() {
-  // 2. We now check localStorage first so the user stays logged in after a refresh
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('haazimi_user');
     return saved ? JSON.parse(saved) : null;
   });
-  
+
   const [currentView, setCurrentView] = useState('dashboard');
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en');
-  
-  // EDIT HERE: Responsive sidebar - starts collapsed (true) on screens smaller than 1200px
+
+  // Initial state: Start collapsed if screen is under 1200px
   const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 1200);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -57,10 +56,9 @@ export default function App() {
     localStorage.setItem('language', language);
   }, [language]);
 
-  // 3. NEW REGISTRATION LOGIC
   const handleRegister = async (name, email, password) => {
     const users = JSON.parse(localStorage.getItem('haazimi_accounts') || '[]');
-    
+
     if (users.find(u => u.email === email)) {
       return { success: false, message: "Email already registered on this device." };
     }
@@ -70,7 +68,6 @@ export default function App() {
     localStorage.setItem('haazimi_accounts', JSON.stringify(users));
 
     try {
-      // Using the variable GOOGLE_SCRIPT_URL for consistency
       await fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
         mode: "no-cors",
@@ -87,17 +84,12 @@ export default function App() {
     return { success: true };
   };
 
-  // 4. UPDATED LOGIN LOGIC
   const handleLogin = (email, password) => {
-    // Check locally registered accounts first
     const localUsers = JSON.parse(localStorage.getItem('haazimi_accounts') || '[]');
     const foundLocal = localUsers.find(u => u.email === email && u.password === password);
-    
-    // Fallback to your mock USERS list if not found locally
     const found = foundLocal || USERS.find(u => u.email === email && u.password === password);
-    
+
     if (found) {
-      // Save session memory so LogTime.jsx knows who this is
       localStorage.setItem('haazimi_user', JSON.stringify({ name: found.name, role: found.role }));
       setUser(found);
       return { success: true };
@@ -105,9 +97,8 @@ export default function App() {
     return { success: false, message: "Invalid email or password." };
   };
 
-  // 5. UPDATED LOGOUT & DEV LOGIN
   const handleLogout = () => {
-    localStorage.removeItem('haazimi_user'); // Clear memory on logout
+    localStorage.removeItem('haazimi_user');
     setUser(null);
     setCurrentView('dashboard');
   };
@@ -119,8 +110,19 @@ export default function App() {
   };
 
   const toggleTheme = () => setTheme(t => t === 'light' ? 'dark' : 'light');
-  const toggleSidebar = () => setSidebarCollapsed(c => !c);
-  const toggleMobileSidebar = () => setMobileSidebarOpen(o => !o);
+
+  // FIXED TOGGLE LOGIC:
+  const toggleSidebar = () => {
+    // If we are on a mobile-sized screen (<= 900px), use the mobile drawer
+    if (window.innerWidth <= 900) {
+      setMobileSidebarOpen(prev => !prev);
+    } else {
+      // If we are on desktop/tablet, just collapse the side
+      setSidebarCollapsed(prev => !prev);
+    }
+  };
+
+  const toggleMobileSidebar = () => setMobileSidebarOpen(prev => !prev);
 
   if (!user) {
     return (
@@ -142,7 +144,10 @@ export default function App() {
     <Layout
       user={user}
       currentView={currentView}
-      onNavigate={(view) => { setCurrentView(view); setMobileSidebarOpen(false); }}
+      onNavigate={(view) => { 
+        setCurrentView(view); 
+        setMobileSidebarOpen(false); 
+      }}
       onLogout={handleLogout}
       theme={theme}
       onToggleTheme={toggleTheme}
