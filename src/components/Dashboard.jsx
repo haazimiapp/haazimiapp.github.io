@@ -270,28 +270,31 @@ function StaffDashboard({ user, onNavigate }) {
 
       <div className="dashboard-section">
         <h3>Recent Time Logs</h3>
-        <table className="staff-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Check In</th>
-              <th>Check Out</th>
-              <th>Hours</th>
-              <th>Activity</th>
-            </tr>
-          </thead>
-          <tbody>
-            {myLogs.map(log => (
-              <tr key={log.id}>
-                <td>{log.date}</td>
-                <td>{log.checkIn}</td>
-                <td>{log.checkOut}</td>
-                <td>{log.hours}h</td>
-                <td>{log.activity}</td>
+        {/* FIXED: Added overflow wrapper to prevent page-wide scrolling */}
+        <div className="table-container" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table className="staff-table" style={{ minWidth: '600px' }}>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+                <th>Hours</th>
+                <th>Activity</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {myLogs.map(log => (
+                <tr key={log.id}>
+                  <td>{log.date}</td>
+                  <td>{log.checkIn}</td>
+                  <td>{log.checkOut}</td>
+                  <td>{log.hours}h</td>
+                  <td>{log.activity}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
