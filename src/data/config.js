@@ -4,8 +4,8 @@ export const COUNTRY_CENTRES = {
   "South Africa": ["Ext. 1 (Lenasia)", "Ext. 13 (Lenasia)"],
   "Venezuela": ["Unare", "El Tigre", "San Jose"],
   "Argentina": ["Buenos Aires", "Mar Del Plata", "Mendoza", "Quilmes"],
-  "Brazil": [],
-  "Paraguay": [],
+  "Brazil": ["Sao Paulo", "Brasilia", "Chuwi"],
+  "Paraguay": ["Foz"],
   "Uruguay": [],
-  "Bolivia": [],
+  "Bolivia": ["La Paz"],
 };
