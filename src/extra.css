@@ -86,7 +86,7 @@
   border-color: transparent;
 }
 
-/* Gregorian day — top left */
+/* Gregorian day — top left (top right in RTL) */
 .day-greg {
   position: absolute;
   top: 5px;
@@ -96,25 +96,26 @@
   line-height: 1;
   color: var(--text-dark);
 }
+[dir="rtl"] .day-greg {
+  left: auto;
+  right: 6px;
+}
 
-/* Today — red circle around day number */
+/* Today — rounded rectangle encompassing the full cell */
+.day-cell.today {
+  border: 2.5px solid #e74c3c !important;
+  background-color: rgba(231, 76, 60, 0.07) !important;
+}
 .day-cell.today .day-greg {
   color: #e74c3c;
   font-weight: 700;
 }
-.day-cell.today::after {
-  content: '';
-  position: absolute;
-  top: 1px;
-  left: 2px;
-  width: 32px;
-  height: 32px;
-  border: 2.5px solid #e74c3c;
-  border-radius: 50%;
-  pointer-events: none;
+.day-cell.today .day-hijri {
+  color: #e74c3c;
+  opacity: 1;
 }
 
-/* Hijri day — bottom right */
+/* Hijri day — bottom right (bottom left in RTL) */
 .day-hijri {
   position: absolute;
   bottom: 5px;
@@ -124,6 +125,10 @@
   line-height: 1;
   color: var(--muzaakarah-color);
   opacity: 1;
+}
+[dir="rtl"] .day-hijri {
+  right: auto;
+  left: 6px;
 }
 
 /* Event dot — centre-bottom */
@@ -308,7 +313,7 @@
 
 .quick-leave-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 14px;
   margin-bottom: 16px;
 }
@@ -410,10 +415,6 @@
   .log-time-hero { padding: 14px 18px; }
   .log-time-hero-icon { width: 44px; height: 44px; }
 
-  /* Quick leave form: 2-column layout on tablet/mobile */
-  .quick-leave-grid {
-    grid-template-columns: 1fr 1fr;
-  }
   .quick-leave-form {
     padding: 16px;
   }
@@ -433,12 +434,8 @@
   /* Day cell responsive */
   .day-greg { font-size: 0.92rem; top: 4px; left: 4px; }
   .day-hijri { font-size: 0.72rem; bottom: 4px; right: 4px; font-weight: 600; }
-  .day-cell.today::after {
-    width: 26px;
-    height: 26px;
-    top: 1px;
-    left: 2px;
-  }
+  [dir="rtl"] .day-greg { left: auto; right: 4px; }
+  [dir="rtl"] .day-hijri { right: auto; left: 4px; }
   .event-dot {
     bottom: 10px;
     width: 4px;
@@ -453,7 +450,8 @@
   .calendar-title-block { min-width: 120px; }
 
   .quick-leave-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
 
   /* Even tighter on very small screens */
@@ -469,17 +467,12 @@
 
   .day-greg { font-size: 0.8rem; top: 2px; left: 3px; }
   .day-hijri { font-size: 0.63rem; bottom: 2px; right: 3px; font-weight: 600; }
+  [dir="rtl"] .day-greg { left: auto; right: 3px; }
+  [dir="rtl"] .day-hijri { right: auto; left: 3px; }
   .event-dot { bottom: 9px; width: 3px; height: 3px; }
 
   .day-cell {
     border-radius: 4px;
     border-width: 1px;
-  }
-  .day-cell.today::after {
-    width: 20px;
-    height: 20px;
-    top: 1px;
-    left: 1px;
-    border-width: 2px;
   }
 }
