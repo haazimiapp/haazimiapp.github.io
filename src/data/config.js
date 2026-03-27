@@ -1,11 +1,11 @@
-export const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbws7pW27E_djBBT1zcG0j4x9A0c0bsTjo5Gc422ZhSu0SOz1n3nbHSHzvtTs77eALUT/exec";
+export const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMk51SEE8GryeoMqoyjZuSpkS86EFG7JiOPVL2Z2MqlL8urO_HGWtZCsjKPxZiqNdq/exec";
 
 export const COUNTRY_CENTRES = {
-  "South Africa": ["Ext. 1 (Lenasia)", "Ext. 13 (Lenasia)"],
-  "Venezuela": ["Unare", "El Tigre", "San Jose"],
   "Argentina": ["Buenos Aires", "Mar Del Plata", "Mendoza", "Quilmes"],
-  "Brazil": ["Sao Paulo", "Brasilia", "Chuwi"],
-  "Paraguay": ["Foz"],
-  "Uruguay": [],
-  "Bolivia": ["La Paz"],
+  "Bolivia": ["Santa Cruz"],
+  "Brazil": ["Bras", "Brasilia", "Foz do Iguaçu", "Santana do Livramento", "Sao Bernardo", "Villa Carrao"],
+  "Paraguay": ["Ciudad del Este"],
+  "South Africa": ["Ext. 1 (Lenasia)", "Ext. 13 (Lenasia)"],
+  "Uruguay": ["Montevideo"],
+  "Venezuela": ["Unare", "El Tigre", "San Jose"],
 };
