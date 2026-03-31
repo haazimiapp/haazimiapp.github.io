@@ -117,7 +117,8 @@ export default function App() {
       reimbursement: 'reimbursement',
       redflags: 'redflags',
       reports: 'reports',
-      classes: 'classes'
+      classes: 'classes',
+      visits: 'redflags' // <--- ADD THIS. Maps "People to Visit" to the Red Flags toggle
     };
 
     // This checks if a view should be hidden based on the Google Sheet row
