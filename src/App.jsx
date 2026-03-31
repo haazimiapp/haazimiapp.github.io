@@ -15,6 +15,7 @@ import Budget from './components/Budget';
 import Settings from './components/Settings';
 import AdminPanel from './components/AdminPanel';
 import Reimbursement from './components/Reimbursement';
+import SuperAdminDashboard from './components/SuperAdminDashboard';
 import { USERS } from './data/mockData';
 import { GOOGLE_SCRIPT_URL } from './data/config';
 
@@ -33,9 +34,12 @@ const VIEWS = {
   settings: Settings,
   admin: AdminPanel,
   reimbursement: Reimbursement,
+  superadmin: SuperAdminDashboard,
 };
 
 const MANAGER_ONLY_VIEWS = new Set(['pendingleaves', 'staff', 'redflags', 'budget', 'reports', 'admin']);
+const SUPER_ADMIN_ONLY_VIEWS = new Set(['superadmin']);
+const SUPER_ADMIN_BLOCKED_VIEWS = new Set(['logtime', 'leave', 'classes', 'staff', 'pendingleaves', 'reimbursement', 'admin']);
 
 export default function App() {
   const [user, setUser] = useState(() => {
@@ -50,7 +54,9 @@ export default function App() {
       const saved = localStorage.getItem('haazimi_user');
       if (saved) {
         const u = JSON.parse(saved);
-        if (u.role === 'Admin') return 'admin';
+        if (u.role === 'Super Admin') return 'superadmin';
+        if (u.role === 'Country Admin') return 'admin';
+        if (u.role === 'Centre Manager') return 'staff';
       }
     } catch {}
     return 'dashboard';
@@ -73,18 +79,59 @@ export default function App() {
     localStorage.setItem('language', language);
   }, [language]);
 
-  const _doLogin = (sessionUser, isDev = false) => {
+  const _doLogin = async (sessionUser, isDev = false) => {
     const userWithTag = { ...sessionUser, isDev };
     localStorage.setItem('haazimi_user', JSON.stringify(userWithTag));
     setUser(userWithTag);
     setMobileSidebarOpen(false);
-    setCurrentView(sessionUser.role === 'Admin' ? 'admin' : 'dashboard');
+
+    // --- FETCH SETTINGS FROM GOOGLE ---
+    try {
+      const resp = await fetch(`${GOOGLE_SCRIPT_URL}?type=getSettings`);
+      const cloudSettings = await resp.json();
+      localStorage.setItem('haazimi_global_settings', JSON.stringify(cloudSettings));
+    } catch (e) {
+      console.error("Cloud settings sync failed", e);
+    }
+
+    const role = sessionUser.role;
+    if (role === 'Super Admin') setCurrentView('superadmin');
+    else if (role === 'Country Admin') setCurrentView('admin');
+    else if (role === 'Centre Manager') setCurrentView('staff');
+    else setCurrentView('dashboard');
+
     return { success: true };
+  };
+
+  // --- LOGIC TO FILTER MENU ITEMS BASED ON CLOUD SETTINGS ---
+  const getFilteredMenuItems = () => {
+    const globalSettings = JSON.parse(localStorage.getItem('haazimi_global_settings') || '{}');
+    const myCentreSettings = globalSettings[user?.centre || user?.Centre] || {};
+
+    // Define the mapping of view keys to the Feature Keys in your Google Sheet
+    const featureMap = {
+      logtime: 'leaves',
+      leave: 'leaves',
+      budget: 'budget',
+      calendar: 'calendar',
+      reimbursement: 'reimbursement',
+      redflags: 'redflags',
+      reports: 'reports',
+      classes: 'classes'
+    };
+
+    // This checks if a view should be hidden based on the Google Sheet row
+    const isVisible = (viewKey) => {
+      const featureKey = featureMap[viewKey];
+      if (!featureKey) return true; // Show by default if not mapped
+      return myCentreSettings[featureKey] !== false; // Hide ONLY if explicitly false
+    };
+
+    return isVisible;
   };
 
   const handleLogin = async (email, password) => {
     const normalizedEmail = email.toLowerCase().trim();
-
     let gsheetsUsers = [];
     let gsheetsReachable = false;
     try {
@@ -119,7 +166,7 @@ export default function App() {
         if (localUser.status === 'Denied') return { success: false, message: 'Registration denied. Contact an admin.' };
         if (localUser.status === 'Approved') {
           return _doLogin({
-            name: localUser.name, email: localUser.email, role: localUser.role || 'Teacher',
+            name: localUser.name, email: localUser.email, role: localUser.role || 'Staff',
             country: localUser.country || '', centre: localUser.centre || '',
           }, false);
         }
@@ -134,13 +181,11 @@ export default function App() {
         country: mockUser.center || '', centre: mockUser.center || '',
       }, true);
     }
-
     return { success: false, message: 'No account found.' };
   };
 
   const handleRegister = async (name, email, password, country, centre) => {
     const normalizedEmail = email.toLowerCase().trim();
-
     let gsheetsUsers = [];
     try {
       const res = await fetch(`${GOOGLE_SCRIPT_URL}?type=getUsers&t=${Date.now()}`, { mode: 'cors' });
@@ -155,16 +200,9 @@ export default function App() {
       if (existingGS.Status === 'Denied') return { success: false, message: 'Your registration was previously denied. Please contact an admin.' };
     }
 
-    try {
-      const existing = JSON.parse(localStorage.getItem('haazimi_accounts') || '[]');
-      if (existing.find((u) => (u.email || '').toLowerCase() === normalizedEmail)) {
-        return { success: false, message: 'An account with this email already exists.' };
-      }
-    } catch {}
-
     const newAccount = {
       name: name.trim(), email: normalizedEmail, password,
-      role: 'Teacher', country, centre,
+      role: 'Staff', country, centre,
       status: 'Pending', registeredAt: new Date().toISOString(),
     };
 
@@ -180,29 +218,27 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'register', ...newAccount }),
       });
-    } catch {}
-    try {
       await fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST', mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'updateUser',
           email: normalizedEmail, name: name.trim(), password,
-          role: 'Teacher', country, centre, status: 'Pending',
+          role: 'Staff', country, centre, status: 'Pending',
         }),
       });
     } catch {}
-
     return { success: true };
   };
 
   const handleDevLogin = (role) => {
     const devUsers = {
-      manager: { name: 'Dev Manager', email: 'manager@dev.local', role: 'Manager', country: 'South Africa', centre: 'Ext. 1 (Lenasia)' },
-      dhimmedaar: { name: 'Dev Staff', email: 'staff@dev.local', role: 'Teacher', country: 'South Africa', centre: 'Ext. 13 (Lenasia)' },
-      admin: { name: 'Dev Admin', email: 'admin@dev.local', role: 'Admin', country: 'South Africa', centre: 'Ext. 1 (Lenasia)' },
+      centremanager: { name: 'Dev Centre Manager', email: 'centremanager@dev.local', role: 'Centre Manager', country: 'South Africa', centre: 'Ext. 1 (Lenasia)' },
+      staff: { name: 'Dev Staff', email: 'staff@dev.local', role: 'Staff', country: 'South Africa', centre: 'Ext. 13 (Lenasia)' },
+      countryadmin: { name: 'Dev Country Admin', email: 'countryadmin@dev.local', role: 'Country Admin', country: 'South Africa', centre: 'Ext. 1 (Lenasia)' },
+      superadmin: { name: 'Dev Super Admin', email: 'superadmin@dev.local', role: 'Super Admin', country: '', centre: '' },
     };
-    const sessionUser = devUsers[role] || devUsers.dhimmedaar;
+    const sessionUser = devUsers[role] || devUsers.staff;
     _doLogin(sessionUser, true);
   };
 
@@ -217,10 +253,21 @@ export default function App() {
   const toggleSidebar = () => setSidebarCollapsed((c) => !c);
   const toggleMobileSidebar = () => setMobileSidebarOpen((o) => !o);
 
-  const isManagerOrAdmin = (role) => ['Admin', 'Manager', 'manager'].includes(role);
+  const isManagerOrAdmin = (role) => ['Centre Manager', 'Country Admin', 'Super Admin'].includes(role);
+  const isSuperAdmin = (role) => role === 'Super Admin';
 
   const handleNavigate = (view) => {
+    if (SUPER_ADMIN_ONLY_VIEWS.has(view) && !isSuperAdmin(user?.role)) return;
     if (MANAGER_ONLY_VIEWS.has(view) && !isManagerOrAdmin(user?.role)) return;
+    if (SUPER_ADMIN_BLOCKED_VIEWS.has(view) && isSuperAdmin(user?.role)) return;
+
+    // Check global settings before allowing navigation
+    const checkVisibility = getFilteredMenuItems();
+    if (!checkVisibility(view)) {
+        alert("This feature has been disabled by your administrator.");
+        return;
+    }
+
     setCurrentView(view);
     setMobileSidebarOpen(false);
   };
@@ -239,7 +286,13 @@ export default function App() {
     );
   }
 
-  const resolvedView = MANAGER_ONLY_VIEWS.has(currentView) && !isManagerOrAdmin(user?.role) ? 'dashboard' : currentView;
+  const checkVisibility = getFilteredMenuItems();
+  const resolvedView = SUPER_ADMIN_ONLY_VIEWS.has(currentView) && !isSuperAdmin(user?.role) ? 'dashboard'
+    : MANAGER_ONLY_VIEWS.has(currentView) && !isManagerOrAdmin(user?.role) ? 'dashboard'
+    : SUPER_ADMIN_BLOCKED_VIEWS.has(currentView) && isSuperAdmin(user?.role) ? 'superadmin'
+    : !checkVisibility(currentView) ? 'dashboard' // Fallback to dashboard if feature is disabled
+    : currentView;
+
   const ViewComponent = VIEWS[resolvedView] || Dashboard;
 
   return (
@@ -256,6 +309,8 @@ export default function App() {
       onToggleSidebar={toggleSidebar}
       mobileSidebarOpen={mobileSidebarOpen}
       onToggleMobileSidebar={toggleMobileSidebar}
+      // Pass the visibility check to Layout so Sidebar can use it
+      checkVisibility={checkVisibility} 
     >
       <ViewComponent
         user={user}
