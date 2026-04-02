@@ -7,7 +7,7 @@ const port = Number(process.env.PORT) || 3000;
 const basePath = process.env.BASE_PATH || "/";
 
 export default defineConfig({
-  base: basePath,
+  base: "/haazimi-app/",
   plugins: [
     react(),
     // Replit-specific plugins (runtimeErrorOverlay, Cartographer, DevBanner) 
@@ -39,3 +39,5 @@ export default defineConfig({
     allowedHosts: true,
   },
 });
+
+
