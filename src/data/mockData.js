@@ -74,7 +74,7 @@ export const CLASSES = [
 ];
 
 export const EVENTS = [
-  { date: '2026-05-27', type: 'holiday', name: 'Eidul Adh'haa Holiday', desc: 'Public holiday' },
+  { date: '2026-05-27', type: 'holiday', name: 'Eidul Adhhaa Holiday', desc: 'Public holiday' },
   { date: '2026-04-11', type: 'monthly-muzaakarah', name: 'Monthly Muzaakarah', desc: 'All staff required to attend' },
   { date: '2026-05-04', type: 'exam', name: 'Mid Year Exams', desc: 'Mid Year Exams for all students' },
   { date: '2026-05-25', type: 'holiday', name: 'Mid Year Holidays', desc: 'Mid Year Holidays begins' },
