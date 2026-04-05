@@ -173,16 +173,16 @@ body {
 }
 
 .login-logo {
+    width: auto;
+    height: clamp(80px, 12vw, 140px);
+    max-width: 100%;
     display: block;
-    width: 100%;
-    max-width: 220px;
-    max-height: 80px;
-    height: auto;
     margin: 0 auto;
     object-fit: contain;
     padding: 0;
     background: transparent;
     border-radius: 0;
+    box-shadow: none;
 }
 
 .login-intro {
