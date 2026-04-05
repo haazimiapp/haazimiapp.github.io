@@ -161,11 +161,25 @@ body {
     text-align: center;
     margin-bottom: 24px;
 }
+
 .login-branding h1 {
     font-size: 2rem;
     font-weight: 700;
     color: var(--accent-color);
     letter-spacing: 1px;
+}
+
+.login-logo {
+    max-width: 220px;
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    padding: 8px;
+    background: #fff;
+    border-radius: 12px;
+    box-sizing: border-box;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9);
 }
 
 .login-intro {
