@@ -186,7 +186,7 @@ body {
 }
 
 body[data-theme='dark'] .login-logo {
-    filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.55));
+    filter: drop-shadow(0 0 0.25px rgba(255, 255, 255, 0.55));
 }
 
 .login-intro {
