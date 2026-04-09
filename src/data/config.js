@@ -1,4 +1,4 @@
-export const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzC4daavpUTsCIHo3WlNd4wCQaWgvQKYmu_r0aYRki5taumDJdNOc84gzrBPOtVFICG/exec";
+export const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxRUiurk8UMbTrCdglOxfbs007cciyIaQzxb80D-abYBJfd_1XHc9cStva6rd7geyGY/exec";
 
 export const COUNTRY_CENTRES = {
   "Argentina": ["Once", "Mar Del Plata", "Mendoza", "Quilmes"],
