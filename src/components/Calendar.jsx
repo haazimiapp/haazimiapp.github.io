@@ -335,6 +335,8 @@ export default function Calendar({ user, language }) {
   const [bulkForm, setBulkForm] = useState({ name: '', type: 'holiday', fromDate: '', toDate: '' });
   const [bulkStatus, setBulkStatus] = useState('idle');
 
+  const defaultScope = getDefaultScope(meta);
+
   useEffect(() => {
     const loadSatSetting = async () => {
       try {
@@ -543,7 +545,9 @@ export default function Calendar({ user, language }) {
         scope: defaultScope,
         country: meta.country || '',
         centre: meta.centre || '',
-        addedBy: user?.name || ''
+        addedBy: user?.name || '',
+        addedByEmail: meta.email || '',
+        addedAt: new Date().toISOString(),
       };
       newEvents.push(ev);
       if (meta.canWriteSheet && GOOGLE_SCRIPT_URL) {
@@ -656,8 +660,6 @@ export default function Calendar({ user, language }) {
     );
     return null;
   };
-
-  const defaultScope = getDefaultScope(meta);
 
   return (
     <div>
