@@ -3,11 +3,12 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 
 // We use default values so the build doesn't crash on GitHub
-const port = Number(process.env.PORT) || 3000;
+const port = Number(process.env.PORT) || 5000;
 const basePath = process.env.BASE_PATH || "/";
 
 export default defineConfig({
-  base: "/haazimi-app/",
+  base: process.env.NODE_ENV === 'production' ? "/haazimi-app/" : "/",
+
   plugins: [
     react(),
     // Replit-specific plugins (runtimeErrorOverlay, Cartographer, DevBanner) 
